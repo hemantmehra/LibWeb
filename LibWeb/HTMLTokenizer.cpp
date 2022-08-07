@@ -1,12 +1,18 @@
+#include <cctype>
 #include <iostream>
 #include <optional>
 #include "HTMLToken.h"
 #include "HTMLTokenizer.h"
 
 #define SWITCH_TO(new_state) \
-	std::cout << "Swtich to " << state_name(State::new_state) << std::endl; \
+	std::cout << "[" << state_name(m_state) << "] Switch to " << state_name(State::new_state) << std::endl; \
 	m_state = State::new_state;	\
 	current_input_character = next_codepoint(); \
+	goto new_state;
+
+#define RECONSUME_IN(new_state) \
+	std::cout << "[" << state_name(m_state) << "] Reconsume in " << state_name(State::new_state) << std::endl; \
+	m_state = State::new_state;	\
 	goto new_state;
 
 #define DONT_CONSUME_NEXT_INPUT_CHARACTER \
@@ -24,6 +30,16 @@
 		(current_input_character.value() == '\f') || \
 		(current_input_character.value() == ' ')    \
 		)
+#define ON_ASCII_ALPHA \
+	if (current_input_character.has_value() && isalpha(current_input_character.value()))
+
+#define ON_EOF \
+	if (!current_input_character.has_value())
+
+#define EMIT_EOF_AND_RETURN \
+	create_new_token(HTMLToken::Type::EndOfFile); \
+	emit_current_token();	\
+	return;
 
 #define ANYTHING_ELSE if(1)
 
@@ -41,7 +57,7 @@ namespace Web
 	std::optional<uint32_t> HTMLTokenizer::next_codepoint()
 	{
 		if (m_cursor >= m_input.length())
-			return 0;
+			return {};
 		return m_input[m_cursor++];
 	}
 
@@ -51,7 +67,7 @@ namespace Web
 			return 0;
 		return m_input[m_cursor + offset];
 	}
-
+		
 	void HTMLTokenizer::run()
 	{
 		for (;;)
@@ -70,6 +86,17 @@ namespace Web
 					{
 						SWITCH_TO(TagOpen);
 					}
+					ON_EOF
+					{
+						EMIT_EOF_AND_RETURN;
+					}
+					ANYTHING_ELSE
+					{
+						create_new_token(HTMLToken::Type::Character);
+						m_current_token.m_comment_or_character.data.push_back(current_input_character.value());
+						emit_current_token();
+						continue;
+					}
 				}
 				END_STATE;
 
@@ -78,6 +105,40 @@ namespace Web
 					ON('!')
 					{
 						SWITCH_TO(MarkupDeclarationOpen);
+					}
+					ON('/')
+					{
+						SWITCH_TO(EndTagOpen);
+					}
+					ON_ASCII_ALPHA
+					{
+						create_new_token(HTMLToken::Type::StartTag);
+						RECONSUME_IN(TagName);
+					}
+				}
+				END_STATE;
+
+				BEGIN_STATE(TagName)
+				{
+					ON('>')
+					{
+						emit_current_token();
+						SWITCH_TO(Data);
+					}
+					ANYTHING_ELSE
+					{
+						m_current_token.m_tag.tag_name.push_back(current_input_character.value());
+						continue;
+					}
+				}
+				END_STATE;
+
+				BEGIN_STATE(EndTagOpen)
+				{
+					ON_ASCII_ALPHA
+					{
+						create_new_token(HTMLToken::Type::EndTag);
+						RECONSUME_IN(TagName);
 					}
 				}
 				END_STATE;
@@ -111,8 +172,7 @@ namespace Web
 
 					ANYTHING_ELSE
 					{
-						m_current_token = {};
-						m_current_token.m_type = HTMLToken::Type::DOCTYPE;
+						create_new_token(HTMLToken::Type::DOCTYPE);
 						m_current_token.m_doctype.name.push_back(current_input_character.value());
 						SWITCH_TO(DOCTYPEName);
 					}
@@ -196,7 +256,13 @@ namespace Web
 			break;
 		}
 
-		std::cout << "Emit! " << s << std::endl;
+		std::cout << "[" << state_name(m_state)  << "] Emit " << s << std::endl;
 		m_current_token = {};
+	}
+
+	void HTMLTokenizer::create_new_token(HTMLToken::Type type)
+	{
+		m_current_token = {};
+		m_current_token.m_type = type;
 	}
 }

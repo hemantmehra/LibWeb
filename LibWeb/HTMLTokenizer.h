@@ -100,6 +100,7 @@ namespace Web
 		bool next_few_characters_are(const std::string& s) const;
 		void consume(const std::string& s);
 		void emit_current_token();
+		void create_new_token(HTMLToken::Type type);
 
 		enum class State
 		{

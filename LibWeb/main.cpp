@@ -7,8 +7,8 @@
 #include "HTMLTokenizer.h"
 
 const char* src_html =
-	"<!DOCTYPE html>"
-	"<head>"
+	"<!DOCTYPE html>\n"
+	"<head>\n"
 	"</head>";
 
 int main()
