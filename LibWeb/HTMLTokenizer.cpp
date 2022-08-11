@@ -18,6 +18,11 @@
 	m_state = State::new_state;	\
 	goto new_state;
 
+#define SWITCH_TO_AND_EMIT_CURRENT_TOKEN(new_state) \
+	will_switch_to(State::new_state); \
+	m_state = State::new_state;	\
+	return m_current_token;
+
 #define DONT_CONSUME_NEXT_INPUT_CHARACTER \
 	--m_cursor;
 
@@ -43,6 +48,13 @@
 	create_new_token(HTMLToken::Type::EndOfFile); \
 	emit_current_token();	\
 	return;
+
+#define EMIT_EOF \
+	create_new_token(HTMLToken::Type::EndOfFile); \
+	return m_current_token;
+
+#define EMIT_CURRENT_TOKEN \
+	return m_current_token;
 
 #define ANYTHING_ELSE if(1)
 
@@ -71,7 +83,7 @@ namespace Web
 		return m_input[m_cursor + offset];
 	}
 		
-	void HTMLTokenizer::run()
+	std::optional<HTMLToken> HTMLTokenizer::next_token()
 	{
 		for (;;)
 		{
@@ -91,13 +103,13 @@ namespace Web
 					}
 					ON_EOF
 					{
-						EMIT_EOF_AND_RETURN;
+						EMIT_EOF;
 					}
 					ANYTHING_ELSE
 					{
 						create_new_token(HTMLToken::Type::Character);
 						m_current_token.m_comment_or_character.data.push_back(current_input_character.value());
-						emit_current_token();
+						EMIT_CURRENT_TOKEN;
 						continue;
 					}
 				}
@@ -125,8 +137,7 @@ namespace Web
 				{
 					ON('>')
 					{
-						emit_current_token();
-						SWITCH_TO(Data);
+						SWITCH_TO_AND_EMIT_CURRENT_TOKEN(Data);
 					}
 					ANYTHING_ELSE
 					{
@@ -186,8 +197,7 @@ namespace Web
 				{
 					ON('>')
 					{
-						emit_current_token();
-						SWITCH_TO(Data);
+						SWITCH_TO_AND_EMIT_CURRENT_TOKEN(Data);
 					}
 
 					ANYTHING_ELSE
@@ -229,46 +239,7 @@ namespace Web
 		return true;
 	}
 
-	void HTMLTokenizer::emit_current_token()
-	{
-		std::string s;
-		switch (m_current_token.type())
-		{
-		case HTMLToken::Type::DOCTYPE:
-			s.append("DOCTYPE");
-			s.append(" { name: '");
-			s.append(m_current_token.m_doctype.name);
-			s.append("' }");
-			break;
-		case HTMLToken::Type::StartTag:
-			s.append("StartTag");
-			break;
-		case HTMLToken::Type::EndTag:
-			s.append("EndTag");
-			break;
-		case HTMLToken::Type::Comment:
-			s.append("Comment");
-			break;
-		case HTMLToken::Type::Character:
-			s.append("Character");
-			break;
-		case HTMLToken::Type::EndOfFile:
-			s.append("EndOfFile");
-			break;
-		default:
-			break;
-		}
-
-		if (m_current_token.type() == HTMLToken::Type::StartTag || m_current_token.type() == HTMLToken::Type::EndTag)
-		{
-			s.append(" { name: '");
-			s.append(m_current_token.m_tag.tag_name);
-			s.append("' }");
-		}
-
-		std::cout << std::format("[{:>42}] {}\n", state_name(m_state), s);
-		m_current_token = {};
-	}
+	
 
 	void HTMLTokenizer::create_new_token(HTMLToken::Type type)
 	{

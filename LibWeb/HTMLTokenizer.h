@@ -92,7 +92,8 @@ namespace Web
 	{
 	public:
 		explicit HTMLTokenizer(const std::string input) : m_input(input) {}
-		void run();
+
+		std::optional<HTMLToken> next_token();
 
 	private:
 		std::optional<uint32_t> next_codepoint();

@@ -21,6 +21,7 @@ namespace Web
 		};
 
 		Type type() const { return m_type; }
+		std::string to_string() const;
 
 	private:
 		Type m_type;

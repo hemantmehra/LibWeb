@@ -9,18 +9,15 @@
 
 const char* src_html =
 	"<!DOCTYPE html>\n"
+	"<html>\n"
 	"<head>\n"
-	"</head>";
+	"</head>\n"
+	"</html>\n";
 
 int main()
 {
-	Web::HTMLTokenizer tokenizer(src_html);
-	tokenizer.run();
-
-#if 0
+	//Web::HTMLTokenizer tokenizer(src_html);
 	Web::HTMLDocumentParser parser(src_html);
 	parser.run();
-#endif
-
 	return 0;
 }

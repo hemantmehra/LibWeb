@@ -49,6 +49,7 @@ namespace Web
 		InsertionMode insertion_mode() const { return m_insertion_mode; }
 
 	private:
+		const char* insertion_mode_name() const;
 		InsertionMode m_insertion_mode{ InsertionMode::Initial };
 		std::vector<Node> m_stack_of_open_elements;
 
