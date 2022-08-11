@@ -121,6 +121,9 @@ namespace Web
 			_ASSERT(false);
 		}
 
+		void will_switch_to(State new_state);
+		void will_reconsume_in(State new_state);
+
 		State m_state{ State::Data };
 		State m_return_state{ State::Data };
 		HTMLToken m_current_token;

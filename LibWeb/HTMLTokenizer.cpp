@@ -3,15 +3,18 @@
 #include <optional>
 #include "HTMLToken.h"
 #include "HTMLTokenizer.h"
+#include <format>
+
+//#define TOKENIZER_TRACE
 
 #define SWITCH_TO(new_state) \
-	std::cout << "[" << state_name(m_state) << "] Switch to " << state_name(State::new_state) << std::endl; \
+	will_switch_to(State::new_state); \
 	m_state = State::new_state;	\
 	current_input_character = next_codepoint(); \
 	goto new_state;
 
 #define RECONSUME_IN(new_state) \
-	std::cout << "[" << state_name(m_state) << "] Reconsume in " << state_name(State::new_state) << std::endl; \
+	will_reconsume_in(State::new_state); \
 	m_state = State::new_state;	\
 	goto new_state;
 
@@ -256,7 +259,14 @@ namespace Web
 			break;
 		}
 
-		std::cout << "[" << state_name(m_state)  << "] Emit " << s << std::endl;
+		if (m_current_token.type() == HTMLToken::Type::StartTag || m_current_token.type() == HTMLToken::Type::EndTag)
+		{
+			s.append(" { name: '");
+			s.append(m_current_token.m_tag.tag_name);
+			s.append("' }");
+		}
+
+		std::cout << std::format("[{:>42}] {}\n", state_name(m_state), s);
 		m_current_token = {};
 	}
 
@@ -264,5 +274,19 @@ namespace Web
 	{
 		m_current_token = {};
 		m_current_token.m_type = type;
+	}
+
+	void HTMLTokenizer::will_switch_to(State new_state)
+	{
+#ifdef TOKENIZER_TRACE
+		std::cout << "[" << state_name(m_state) << "] Switch to " << state_name(new_state) << std::endl;
+#endif
+	}
+
+	void HTMLTokenizer::will_reconsume_in(State new_state)
+	{
+#ifdef TOKENIZER_TRACE
+		std::cout << "[" << state_name(m_state) << "] Reconsume in " << state_name(new_state) << std::endl;
+#endif
 	}
 }
