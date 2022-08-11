@@ -8,19 +8,36 @@ namespace Web
 		: m_tokenizer(input)
 	{}
 
+	HTMLDocumentParser::~HTMLDocumentParser()
+	{}
+
 	void HTMLDocumentParser::run()
 	{
 		for (;;)
 		{
-			auto token = m_tokenizer.next_token();
-
-			if (!token.has_value())
+			auto optional_token = m_tokenizer.next_token();
+			if (!optional_token.has_value())
 				return;
 
-			std::cout << "[" << insertion_mode_name() << "] " << token.value().to_string() << std::endl;
+			auto& token = optional_token.value();
 
-			if (token.value().type() == HTMLToken::Type::EndOfFile)
+			std::cout << "[" << insertion_mode_name() << "] " << token.to_string() << std::endl;
+
+			if (token.type() == HTMLToken::Type::EndOfFile)
 				return;
+
+			switch (m_insertion_mode)
+			{
+			case InsertionMode::Initial:
+				if (token.type() == HTMLToken::Type::DOCTYPE)
+				{
+					
+				}
+				break;
+			
+			default:
+				break;
+			}
 		}
 	}
 

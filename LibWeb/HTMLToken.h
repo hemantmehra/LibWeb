@@ -3,11 +3,13 @@
 #include <string>
 #include <vector>
 #include "Attribute.h"
+#include "Forward.h"
 
 namespace Web
 {
 	class HTMLToken
 	{
+		friend class HTMLDocumentParser;
 		friend class HTMLTokenizer;
 	public:
 		enum class Type

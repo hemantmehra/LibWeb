@@ -12,10 +12,12 @@ add_executable (LibWeb
 				"HTMLTokenizer.cpp"
 				"Attribute.h"
 				"HTMLDocumentParser.h"
-				"DOM/Node.h" "HTMLDocumentParser.cpp")
+				"HTMLDocumentParser.cpp" "Forward.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET LibWeb PROPERTY CXX_STANDARD 20)
 endif()
 
 # TODO: Add tests and install targets if needed.
+add_subdirectory(DOM)
+target_link_libraries(DOM)

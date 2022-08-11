@@ -36,6 +36,7 @@ namespace Web
 	{
 	public:
 		explicit HTMLDocumentParser(const std::string& input);
+		~HTMLDocumentParser();
 
 		void run();
 

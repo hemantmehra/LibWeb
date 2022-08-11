@@ -16,7 +16,6 @@ const char* src_html =
 
 int main()
 {
-	//Web::HTMLTokenizer tokenizer(src_html);
 	Web::HTMLDocumentParser parser(src_html);
 	parser.run();
 	return 0;
